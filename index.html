@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Import Data</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .input-row { display: flex; align-items: center; margin-bottom: 10px; }
+    .input-row input { margin-right: 10px; padding: 5px; }
+    .input-row button { background: none; border: none; cursor: pointer; font-size: 20px; }
+    .add-button { margin-top: 10px; }
+    button {
+      padding: 10px 20px;
+      background-color: #4CAF50; /* Green */
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #45a049; /* Darker green */
+    }
+  </style>
+</head>
+<body>
+  <h1>Import Data</h1>
+  <p>Enter provider names and their ideal encounters below.</p>
+
+  <!-- Container for input rows -->
+  <div id="inputContainer">
+    <div class="input-row">
+      <input type="text" placeholder="Provider Name">
+      <input type="number" placeholder="Ideal Encounters">
+      <button onclick="removeRow(this)">🗑️</button>
+    </div>
+  </div>
+
+  <!-- Add Row Button -->
+  <button class="add-button" onclick="addRow()">➕ Add Provider</button>
+
+  <!-- File Upload -->
+  <h2>Import CSV</h2>
+  <input type="file" id="fileInput" accept=".csv">
+  <button onclick="importData()">Import Data</button>
+
+  <!-- Send to Results -->
+  <h2>Send to Results</h2>
+  <button onclick="sendToResults()">Send</button>
+
+  <script>
+    let providers = [];
+    let importedData = [];
+
+    // Function to add a new row of input fields
+    function addRow() {
+      const container = document.getElementById("inputContainer");
+
+      // Create a new row
+      const row = document.createElement("div");
+      row.className = "input-row";
+
+      // Add provider name input
+      const providerInput = document.createElement("input");
+      providerInput.type = "text";
+      providerInput.placeholder = "Provider Name";
+
+      // Add ideal encounters input
+      const encountersInput = document.createElement("input");
+      encountersInput.type = "number";
+      encountersInput.placeholder = "Ideal Encounters";
+
+      // Add trash button
+      const trashButton = document.createElement("button");
+      trashButton.innerHTML = "🗑️";
+      trashButton.onclick = function() { removeRow(this); };
+
+      // Append inputs and button to the row
+      row.appendChild(providerInput);
+      row.appendChild(encountersInput);
+      row.appendChild(trashButton);
+
+      // Append the row to the container
+      container.appendChild(row);
+    }
+
+    // Function to remove a row
+    function removeRow(button) {
+      const row = button.parentElement;
+      row.remove();
+    }
+
+    // Function to import CSV data
+    function importData() {
+      const file = document.getElementById("fileInput").files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const text = e.target.result;
+        const rows = text.split("\n").slice(1); // Skip header row
+        importedData = rows.map(row => {
+          const [provider, encounters, chargeTotal] = row.split(",");
+          return { provider, encounters: parseInt(encounters, 10), chargeTotal: parseFloat(chargeTotal), date: new Date().toISOString().split("T")[0] };
+        });
+
+        alert("Data imported successfully!");
+      };
+      reader.readAsText(file);
+    }
+
+    // Function to send data to Results Page
+    function sendToResults() {
+      // Save providers
+      const rows = document.querySelectorAll(".input-row");
+      providers = [];
+      rows.forEach(row => {
+        const provider = row.querySelector("input[type='text']").value;
+        const idealEncounters = parseInt(row.querySelector("input[type='number']").value, 10);
+        if (provider && !isNaN(idealEncounters)) {
+          providers.push({ name: provider, idealEncounters });
+        }
+      });
+
+      // Save data to localStorage
+      localStorage.setItem("providers", JSON.stringify(providers));
+      localStorage.setItem("importedData", JSON.stringify(importedData));
+
+      // Redirect to Results Page
+      window.location.href = "results.html";
+    }
+  </script>
+</body>
+</html>

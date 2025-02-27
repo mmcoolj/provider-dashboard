@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Results</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    .progress-bar { width: 100%; background-color: #f3f3f3; border-radius: 5px; }
+    .progress { height: 20px; background-color: #4caf50; border-radius: 5px; }
+    .leaderboard { margin-top: 20px; }
+    .leaderboard h3 { margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Results</h1>
+
+  <!-- Filter Data -->
+  <h2>Filter Data</h2>
+  <select id="providerFilter"></select>
+  <button onclick="filterData()">Filter</button>
+
+  <!-- Filtered Data -->
+  <h2>Filtered Data</h2>
+  <table id="dataTable">
+    <thead>
+      <tr>
+        <th>Provider</th>
+        <th>Encounters</th>
+        <th>Charge Total</th>
+        <th>Date</th>
+        <th>Progress</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <!-- Leaderboard -->
+  <div class="leaderboard">
+    <h3>Leaderboard</h3>
+    <ol id="leaderboard"></ol>
+  </div>
+
+  <script>
+    let providers = JSON.parse(localStorage.getItem("providers")) || [];
+    let importedData = JSON.parse(localStorage.getItem("importedData")) || [];
+
+    // Function to update the provider filter dropdown
+    function updateProviderFilter() {
+      const filter = document.getElementById("providerFilter");
+      filter.innerHTML = providers.map(p => `<option value="${p.name}">${p.name}</option>`).join("");
+    }
+
+    // Function to filter data by provider
+    function filterData() {
+      const provider = document.getElementById("providerFilter").value;
+      const filteredData = importedData.filter(row => row.provider === provider);
+      const tableBody = document.querySelector("#dataTable tbody");
+      tableBody.innerHTML = filteredData.map(row => {
+        const providerInfo = providers.find(p => p.name === row.provider);
+        const progress = providerInfo ? (row.encounters / providerInfo.idealEncounters) * 100 : 0;
+        return `
+          <tr>
+            <td>${row.provider}</td>
+            <td>${row.encounters}</td>
+            <td>${row.chargeTotal}</td>
+            <td>${row.date}</td>
+            <td>
+              <div class="progress-bar">
+                <div class="progress" style="width: ${progress}%"></div>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    // Function to update the leaderboard
+    function updateLeaderboard() {
+      const leaderboard = document.getElementById("leaderboard");
+      const sortedProviders = providers.map(p => {
+        const encounters = importedData.filter(row => row.provider === p.name).reduce((sum, row) => sum + row.encounters, 0);
+        return { ...p, encounters };
+      }).sort((a, b) => b.encounters - a.encounters);
+
+      leaderboard.innerHTML = sortedProviders.map(p => `
+        <li>${p.name}: ${p.encounters} Encounters</li>
+      `).join("");
+    }
+
+    // Initialize the page
+    updateProviderFilter();
+    filterData();
+    updateLeaderboard();
+  </script>
+</body>
+</html>
